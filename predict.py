@@ -5,8 +5,8 @@ import numpy as np
 import gensim.downloader as api
 from sklearn.linear_model import LinearRegression
 
-from preprocess import preprocess
-from metrics import common_words, word_movers_distance
+from preprocess import *
+from metrics import *
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--transcripts_dir', 
@@ -45,6 +45,19 @@ def main(args):
             embedding = api.load('word2vec-google-news-300')
         elif args.embed_model == 'glove':
             embedding = api.load('glove-twitter-25')
+
+    # Get total number of word tokens and word types
+    print("Computing total number of word tokens and types")
+    n_tokens = []
+    n_types = []
+    for s_id in subject_ids:
+        n_tok = total_word_tokens(transcripts[s_id])
+        n_tokens.append(n_tok)
+        n_typ = total_word_types(transcripts[s_id])
+        n_types.append(n_typ)
+    n_tokens = np.array(n_tokens)
+    n_types= np.array(n_types)
+    print("Done.")
 
     # Get common word types
     print("Computing common word types")
@@ -92,12 +105,22 @@ def main(args):
     # Save predictions
     print("Saving predicted ratings to {}".format(args.save_predictions_fn))
     with open(args.save_predictions_fn, 'w') as f:
-        fieldnames = ['Subject IDs', 'Predicted Ratings']
+        fieldnames = ['Subject IDs',
+                      'Number of tokens',
+                      'Number of types', 
+                      'Common Words', 
+                      'WMD', 
+                      'Predicted Ratings']
         writer = csv.DictWriter(f, fieldnames=fieldnames)
 
         writer.writeheader()
-        for s_id, yhat_i in zip(subject_ids, y_hat):
-            writer.writerow({'Subject IDs': s_id, 'Predicted Ratings': yhat_i})
+        for i in range(len(subject_ids)):
+            writer.writerow({'Subject IDs': subject_ids[i],
+                             'Number of tokens': n_tokens[i],
+                             'Number of types': n_types[i], 
+                             'Common Words': n_common[i],
+                             'WMD': wmd[i],
+                             'Predicted Ratings': y_hat[i]})
 
 if __name__ == '__main__':
     args = parser.parse_args()

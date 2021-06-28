@@ -1,3 +1,9 @@
+def total_word_tokens(doc):
+    return len(doc)
+
+def total_word_types(doc):
+    return len(set(doc))
+
 def common_words(doc1, doc2):
     """ 
     Compute the number of words (types - not tokens) in common
